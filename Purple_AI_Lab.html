@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PurpleFabric AI Lab | Material Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fafaf9; color: #1c1917; }
+        h1, h2, h3, .serif { font-family: 'Playfair Display', serif; }
+        
+        /* CSS Textures to simulate materials without images */
+        .texture-glass-fluted {
+            background: repeating-linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.4) 5px, rgba(200,200,200,0.2) 5px, rgba(200,200,200,0.2) 10px);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .texture-glass-clear {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.4) 100%);
+            backdrop-filter: blur(0px);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .texture-metal-brushed {
+            background: repeating-linear-gradient(0deg, #d1d5db, #d1d5db 1px, #e5e7eb 1px, #e5e7eb 2px);
+        }
+        .texture-metal-matte {
+            background-color: #1f2937;
+            background-image: radial-gradient(#374151 1px, transparent 1px);
+            background-size: 4px 4px;
+        }
+        .texture-stone-honed {
+            background-color: #d6d3d1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+        }
+        .texture-wood-oak {
+            background: #a87b50;
+            background-image: linear-gradient(90deg, rgba(255,255,255,.07) 50%, transparent 50%),
+            linear-gradient(90deg, rgba(255,255,255,.13) 50%, transparent 50%),
+            linear-gradient(90deg, transparent 50%, rgba(255,255,255,.17) 50%),
+            linear-gradient(90deg, transparent 50%, rgba(255,255,255,.19) 50%);
+            background-size: 13px, 29px, 37px, 53px;
+        }
+        .texture-fabric-felt {
+            background-color: #9ca3af;
+            background-image: radial-gradient(#6b7280 0.5px, transparent 0.5px);
+            background-size: 3px 3px;
+        }
+        .texture-bio {
+            background-color: #ecfccb;
+            background-image: radial-gradient(#4d7c0f 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        .nav-item.active {
+            border-bottom: 2px solid #581c87;
+            color: #581c87;
+            font-weight: 600;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone-50) with Deep Purple Accents (Purple-900) and Charcoal text. Minimalist, architectural. -->
+    <!-- Application Structure Plan: 
+         1. Hero: Introduces the core concept "Trust is something you can feel".
+         2. Philosophy Triptych: Interactive cards explaining the 3 design tensions.
+         3. Material Laboratory: An interactive grid allowing users to select material families to see their rationale, application, and simulated texture.
+         4. Spatial Intelligence: A split view with a Zone List on the left and a "Zone Analytics" Radar Chart on the right. This visualizes the qualitative "vibe" of each room (Privacy, Tech, Warmth, etc.).
+         5. Color DNA: Simple swatch display.
+         6. Closing Impact: Final statement.
+         Rationale: This structure breaks the linear script into explorable chunks. The Radar chart transforms abstract feelings into "data", fitting for an AI/Fintech audience. 
+    -->
+    <!-- Visualization & Content Choices: 
+         1. Radar Chart (Chart.js): Visualizes the "Sensory Profile" of each zone (e.g., Trust Room vs. Engineering Studio). Goal: Inform/Compare.
+         2. CSS Textures: Replaces photos to give a tactile sense of materials (Fluted glass, honed stone) without assets. Goal: Inform/Wow.
+         3. Interactive lists: For materials and zones to manage content density.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-purple-900 serif tracking-tight">PurpleFabric<span class="font-light text-stone-500">LAB</span></span>
+                </div>
+                <div class="hidden sm:flex space-x-8 items-center" id="nav-links">
+                    <button onclick="scrollToSection('philosophy')" class="text-stone-600 hover:text-purple-900 px-3 py-2 text-sm font-medium transition-colors">Philosophy</button>
+                    <button onclick="scrollToSection('materials')" class="text-stone-600 hover:text-purple-900 px-3 py-2 text-sm font-medium transition-colors">Material Strategy</button>
+                    <button onclick="scrollToSection('spatial')" class="text-stone-600 hover:text-purple-900 px-3 py-2 text-sm font-medium transition-colors">Spatial Experience</button>
+                    <button onclick="scrollToSection('color')" class="text-stone-600 hover:text-purple-900 px-3 py-2 text-sm font-medium transition-colors">Color</button>
+                </div>
+                <!-- Mobile menu button placeholder -->
+                <div class="flex items-center sm:hidden">
+                    <button class="text-stone-500 hover:text-purple-900">
+                        <span class="text-xl">☰</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-stone-50 py-20 px-4 sm:px-6 lg:px-8 text-center border-b border-stone-200">
+        <div class="max-w-4xl mx-auto">
+            <p class="text-purple-900 font-semibold tracking-wide uppercase text-sm mb-4">Material Strategy Presentation</p>
+            <h1 class="text-4xl md:text-6xl font-bold text-stone-900 mb-6 leading-tight">
+                "Trust is something <br/><span class="text-purple-900 italic">you can feel.</span>"
+            </h1>
+            <p class="text-xl text-stone-600 max-w-2xl mx-auto leading-relaxed">
+                Translating transparent, accountable AI into a physical environment. 
+                Where decisions have consequences, the space communicates permanence, clarity, and control.
+            </p>
+            <div class="mt-10">
+                <button onclick="scrollToSection('philosophy')" class="bg-stone-900 text-white px-8 py-3 rounded-none hover:bg-purple-900 transition-colors duration-300">
+                    Explore the Strategy
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+
+        <!-- Philosophy Section -->
+        <section id="philosophy" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12 text-center md:text-left">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">Design Philosophy</h2>
+                <p class="text-stone-600 max-w-2xl">We have balanced three core tensions to create an environment of material honesty. Nothing feels temporary. Nothing is experimental for its own sake.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="group bg-white p-8 border border-stone-200 hover:border-purple-200 hover:shadow-lg transition-all duration-300 cursor-default">
+                    <div class="w-12 h-1 bg-stone-300 mb-6 group-hover:bg-purple-600 transition-colors"></div>
+                    <h3 class="text-xl font-bold text-stone-900 mb-3">Precision with Warmth</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Financial technology requires exactness, but human trust requires comfort. We use exact joinery and cool metals softened by natural wood and light.
+                    </p>
+                </div>
+                <!-- Card 2 -->
+                <div class="group bg-white p-8 border border-stone-200 hover:border-purple-200 hover:shadow-lg transition-all duration-300 cursor-default">
+                    <div class="w-12 h-1 bg-stone-300 mb-6 group-hover:bg-purple-600 transition-colors"></div>
+                    <h3 class="text-xl font-bold text-stone-900 mb-3">Transparency with Solidity</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Glass represents "Explainable AI"—visible intelligence. Stone represents the institutional credibility required to hold that intelligence securely.
+                    </p>
+                </div>
+                <!-- Card 3 -->
+                <div class="group bg-white p-8 border border-stone-200 hover:border-purple-200 hover:shadow-lg transition-all duration-300 cursor-default">
+                    <div class="w-12 h-1 bg-stone-300 mb-6 group-hover:bg-purple-600 transition-colors"></div>
+                    <h3 class="text-xl font-bold text-stone-900 mb-3">Technology with Humanity</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Tech is embedded, not displayed. The "bones" of the room are human-centric—biophilia and textiles—while the infrastructure supports high-compute work.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Material Strategy Section -->
+        <section id="materials" class="py-20 bg-stone-100 border-y border-stone-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-12">
+                    <h2 class="text-3xl font-bold text-stone-900 mb-4">Material Strategy</h2>
+                    <p class="text-stone-600 max-w-3xl">Click on a material family to understand its strategic role in the ecosystem. Notice how each texture serves a specific psychological or functional purpose.</p>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Material Navigation -->
+                    <div class="lg:w-1/3 flex flex-col space-y-2">
+                        <button onclick="updateMaterial('glass')" id="btn-glass" class="material-btn active text-left px-6 py-4 bg-white border-l-4 border-purple-900 shadow-sm hover:bg-purple-50 transition-all group">
+                            <span class="block font-bold text-stone-900 group-hover:text-purple-900">01. Glass & Transparency</span>
+                            <span class="text-xs text-stone-500 uppercase tracking-wide">The Metaphor for Explainable AI</span>
+                        </button>
+                        <button onclick="updateMaterial('metal')" id="btn-metal" class="material-btn text-left px-6 py-4 bg-white border-l-4 border-transparent hover:border-stone-300 shadow-sm hover:bg-stone-50 transition-all group">
+                            <span class="block font-bold text-stone-900 group-hover:text-stone-800">02. Metals</span>
+                            <span class="text-xs text-stone-500 uppercase tracking-wide">Engineering Rigor</span>
+                        </button>
+                        <button onclick="updateMaterial('stone')" id="btn-stone" class="material-btn text-left px-6 py-4 bg-white border-l-4 border-transparent hover:border-stone-300 shadow-sm hover:bg-stone-50 transition-all group">
+                            <span class="block font-bold text-stone-900 group-hover:text-stone-800">03. Stone & Microcement</span>
+                            <span class="text-xs text-stone-500 uppercase tracking-wide">Permanence & Credibility</span>
+                        </button>
+                        <button onclick="updateMaterial('wood')" id="btn-wood" class="material-btn text-left px-6 py-4 bg-white border-l-4 border-transparent hover:border-stone-300 shadow-sm hover:bg-stone-50 transition-all group">
+                            <span class="block font-bold text-stone-900 group-hover:text-stone-800">04. Wood</span>
+                            <span class="text-xs text-stone-500 uppercase tracking-wide">Human Judgment</span>
+                        </button>
+                        <button onclick="updateMaterial('textile')" id="btn-textile" class="material-btn text-left px-6 py-4 bg-white border-l-4 border-transparent hover:border-stone-300 shadow-sm hover:bg-stone-50 transition-all group">
+                            <span class="block font-bold text-stone-900 group-hover:text-stone-800">05. Textiles & Acoustics</span>
+                            <span class="text-xs text-stone-500 uppercase tracking-wide">Cognitive Infrastructure</span>
+                        </button>
+                        <button onclick="updateMaterial('bio')" id="btn-bio" class="material-btn text-left px-6 py-4 bg-white border-l-4 border-transparent hover:border-stone-300 shadow-sm hover:bg-stone-50 transition-all group">
+                            <span class="block font-bold text-stone-900 group-hover:text-stone-800">06. Biophilic Elements</span>
+                            <span class="text-xs text-stone-500 uppercase tracking-wide">Balance & Recovery</span>
+                        </button>
+                    </div>
+
+                    <!-- Detail View -->
+                    <div class="lg:w-2/3 bg-white p-8 border border-stone-200 shadow-lg relative min-h-[400px]" id="material-display">
+                        <!-- Dynamic Content injected by JS -->
+                        <div class="fade-in">
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-stone-900 mb-2">Glass & Transparency</h3>
+                                    <p class="text-purple-900 font-medium">"Explainable AI made visible"</p>
+                                </div>
+                                <div class="h-20 w-20 texture-glass-fluted rounded shadow-inner border border-stone-200" title="Material Sample Simulation"></div>
+                            </div>
+                            <hr class="border-stone-100 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-bold text-stone-800 mb-2 uppercase text-xs tracking-wider">Strategic Application</h4>
+                                    <ul class="space-y-3 text-sm text-stone-600">
+                                        <li class="flex items-start"><span class="text-purple-900 mr-2">▪</span> <strong>Clear Glass:</strong> Used for partitions to create openness and sightlines connecting teams.</li>
+                                        <li class="flex items-start"><span class="text-purple-900 mr-2">▪</span> <strong>Fluted/Ribbed Glass:</strong> Creates visual layers and complexity without clutter.</li>
+                                        <li class="flex items-start"><span class="text-purple-900 mr-2">▪</span> <strong>Gradient/Fritted:</strong> Provides privacy for proprietary work (Insight Gallery) without total opacity.</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-stone-800 mb-2 uppercase text-xs tracking-wider">The "Why"</h4>
+                                    <p class="text-sm text-stone-600 leading-relaxed mb-4">
+                                        Glass is the physical metaphor for explainable AI. Visitors see openness, teams get functional separation.
+                                    </p>
+                                    <div class="bg-stone-50 p-4 border-l-2 border-purple-900 italic text-stone-700 text-sm">
+                                        "Trust isn't claimed—it's architectural."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Spatial Zoning & Analytics Section -->
+        <section id="spatial" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">Spatial Experience</h2>
+                <p class="text-stone-600 max-w-3xl">Select a zone to analyze its "Sensory Profile." We map materials to the functional needs of the space—balancing privacy, collaboration, and focus.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Zone List -->
+                <div class="lg:col-span-4 space-y-2">
+                    <h3 class="font-serif text-xl mb-4 text-stone-800 border-b pb-2">Facility Zones</h3>
+                    <div id="zone-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Zone Analytics (Chart) -->
+                <div class="lg:col-span-8 bg-white border border-stone-200 p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="chart-title" class="text-xl font-bold text-purple-900">Zone Analysis</h3>
+                        <span id="zone-desc-short" class="text-xs bg-stone-100 px-2 py-1 rounded text-stone-600">Select a zone</span>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="zoneRadarChart"></canvas>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-3 gap-4 text-center text-sm border-t border-stone-100 pt-4">
+                        <div>
+                            <span class="block text-stone-400 text-xs uppercase">Primary Material</span>
+                            <span id="stat-material" class="font-semibold text-stone-800">-</span>
+                        </div>
+                        <div>
+                            <span class="block text-stone-400 text-xs uppercase">Key Function</span>
+                            <span id="stat-function" class="font-semibold text-stone-800">-</span>
+                        </div>
+                        <div>
+                            <span class="block text-stone-400 text-xs uppercase">Psychology</span>
+                            <span id="stat-psych" class="font-semibold text-stone-800">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Color Strategy -->
+        <section id="color" class="py-20 bg-white border-t border-stone-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-stone-900 mb-4">Color Strategy</h2>
+                    <p class="text-stone-600">Color emerges from materials, not paint. No high-gloss. No high-saturation. Everything stays grounded.</p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Swatch 1 -->
+                    <div class="bg-purple-900 h-40 flex items-end p-4 text-white hover:scale-[1.02] transition-transform duration-300">
+                        <div>
+                            <span class="block font-bold">Deep Purple</span>
+                            <span class="text-xs opacity-70">Brand Anchor (Accent)</span>
+                        </div>
+                    </div>
+                    <!-- Swatch 2 -->
+                    <div class="bg-stone-800 h-40 flex items-end p-4 text-white hover:scale-[1.02] transition-transform duration-300">
+                        <div>
+                            <span class="block font-bold">Charcoal</span>
+                            <span class="text-xs opacity-70">Visual Stability</span>
+                        </div>
+                    </div>
+                    <!-- Swatch 3 -->
+                    <div class="bg-[#d6d3d1] h-40 flex items-end p-4 text-stone-800 hover:scale-[1.02] transition-transform duration-300">
+                        <div>
+                            <span class="block font-bold">Warm Stone</span>
+                            <span class="text-xs opacity-70">Human Warmth</span>
+                        </div>
+                    </div>
+                    <!-- Swatch 4 -->
+                    <div class="bg-[#4d7c0f] h-40 flex items-end p-4 text-white hover:scale-[1.02] transition-transform duration-300" style="background-color: #577c48;">
+                        <div>
+                            <span class="block font-bold">Natural Green</span>
+                            <span class="text-xs opacity-70">Restoration</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Closing -->
+        <section class="py-20 bg-stone-900 text-stone-100 text-center px-4">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-serif italic mb-6">"This material palette doesn't aim to impress instantly. It's designed to earn trust over time."</h2>
+                <p class="text-stone-400 mb-8">
+                    When a client visits, they don't feel sold to; they feel reassured.
+                </p>
+                <div class="inline-block border border-stone-700 px-6 py-3 text-sm tracking-widest uppercase">
+                    PurpleFabric AI Lab
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-950 text-stone-600 py-8 text-center text-xs border-t border-stone-800">
+        <p>&copy; 2024 PurpleFabric AI. Internal Strategy Document.</p>
+    </footer>
+
+    <script>
+        // --- Data Definitions ---
+
+        const materials = {
+            glass: {
+                title: "Glass & Transparency",
+                quote: "Explainable AI made visible",
+                cssClass: "texture-glass-fluted",
+                points: [
+                    "<strong>Clear Glass:</strong> Openness and sightlines.",
+                    "<strong>Fluted Glass:</strong> Visual depth and complexity.",
+                    "<strong>Gradient Glass:</strong> Privacy without opacity."
+                ],
+                why: "Glass is the physical metaphor for explainable AI. Visitors see openness, teams get functional separation.",
+                insight: "Trust isn't claimed—it's architectural."
+            },
+            metal: {
+                title: "Metals",
+                quote: "Engineering Rigor",
+                cssClass: "texture-metal-brushed",
+                points: [
+                    "<strong>Brushed Aluminum:</strong> Structural accents.",
+                    "<strong>Matte Black Steel:</strong> Grounding details.",
+                    "<strong>Dark Anodized:</strong> Door frames & lighting."
+                ],
+                why: "No decoration. No shine. This is the language of reliability. It communicates that systems are built with discipline.",
+                insight: "Precision you can touch."
+            },
+            stone: {
+                title: "Stone & Microcement",
+                quote: "Permanence & Credibility",
+                cssClass: "texture-stone-honed",
+                points: [
+                    "<strong>Microcement Flooring:</strong> Seamless grounding.",
+                    "<strong>Honed Stone:</strong> Low-sheen solidity.",
+                    "<strong>Polished Concrete:</strong> Industrial strength."
+                ],
+                why: "Makes digital intelligence feel permanent. Anchors the abstraction of AI into something solid and lasting.",
+                insight: "Institutional credibility, not startup fragility."
+            },
+            wood: {
+                title: "Wood Veneers",
+                quote: "Human Judgment",
+                cssClass: "texture-wood-oak",
+                points: [
+                    "<strong>Warm Oak:</strong> Trust & Ethics Room.",
+                    "<strong>Walnut:</strong> Executive touchpoints.",
+                    "<strong>Strategic Use:</strong> Only where decisions happen."
+                ],
+                why: "Behind every algorithm is human judgment. Wood introduces warmth and reflection without softness.",
+                insight: "We take responsibility for what our systems do."
+            },
+            textile: {
+                title: "Textiles & Acoustics",
+                quote: "Cognitive Infrastructure",
+                cssClass: "texture-fabric-felt",
+                points: [
+                    "<strong>Felt Panels:</strong> Noise reduction.",
+                    "<strong>Wool Upholstery:</strong> Tactile comfort.",
+                    "<strong>Wall Wraps:</strong> Visual softening."
+                ],
+                why: "Intelligence requires focus. These materials reduce cognitive load so teams can think for 8 hours without fatigue.",
+                insight: "Supporting operational performance."
+            },
+            bio: {
+                title: "Biophilic Elements",
+                quote: "Balance & Recovery",
+                cssClass: "texture-bio",
+                points: [
+                    "<strong>Indoor Planting:</strong> Air quality & visuals.",
+                    "<strong>Natural Fibers:</strong> Texture contrast.",
+                    "<strong>Greenery Compositions:</strong> Transition zones."
+                ],
+                why: "Nature counterbalances abstraction. Research shows it improves cognitive performance in high-stakes environments.",
+                insight: "Taking care of your people."
+            }
+        };
+
+        const zones = [
+            {
+                id: 'entry',
+                name: "Entry / Trust Threshold",
+                desc: "Immediate authority and calm confidence.",
+                materials: "Stone, Glass, Matte Metal",
+                function: "Authority",
+                psych: "Confidence",
+                // Radar Data: [Privacy, Tech-Feel, Warmth, Acoustics, Biophilia] (Scale 1-10)
+                data: [2, 6, 5, 4, 3] 
+            },
+            {
+                id: 'gallery',
+                name: "AI Insight Gallery",
+                desc: "Legibility without overwhelm.",
+                materials: "Dark surfaces, Gradient Glass",
+                function: "Showcase",
+                psych: "Clarity",
+                data: [5, 9, 3, 5, 1]
+            },
+            {
+                id: 'collab',
+                name: "Collaboration Arena",
+                desc: "Where humans and AI work together.",
+                materials: "Wood accents, Textiles, Glass",
+                function: "Partnership",
+                psych: "Energy",
+                data: [3, 7, 7, 6, 4]
+            },
+            {
+                id: 'eng',
+                name: "Engineering Studio",
+                desc: "Pure focus.",
+                materials: "Acoustic panels, Neutral finishes",
+                function: "Deep Work",
+                psych: "Focus",
+                data: [6, 8, 4, 10, 2]
+            },
+            {
+                id: 'trust',
+                name: "Trust & Ethics Room",
+                desc: "Responsibility made physical.",
+                materials: "Wood, Fabric, Warm Lighting",
+                function: "Governance",
+                psych: "Responsibility",
+                data: [9, 3, 9, 8, 3]
+            },
+            {
+                id: 'reflect',
+                name: "Reflection Zone",
+                desc: "Mental restoration.",
+                materials: "Plants, Natural Textures",
+                function: "Restoration",
+                psych: "Calm",
+                data: [4, 1, 8, 7, 10]
+            }
+        ];
+
+        // --- Core Interactions ---
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Material Update Logic
+        function updateMaterial(key) {
+            const data = materials[key];
+            const display = document.getElementById('material-display');
+            
+            // Remove Fade In class to reset animation
+            const content = display.querySelector('.fade-in');
+            if(content) content.classList.remove('fade-in');
+
+            // Update UI
+            document.querySelectorAll('.material-btn').forEach(b => {
+                b.classList.remove('border-purple-900', 'bg-purple-50');
+                b.classList.add('border-transparent');
+            });
+            const activeBtn = document.getElementById(`btn-${key}`);
+            activeBtn.classList.remove('border-transparent');
+            activeBtn.classList.add('border-purple-900', 'bg-purple-50');
+
+            // Construct HTML
+            const html = `
+                <div class="fade-in">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-2xl font-bold text-stone-900 mb-2">${data.title}</h3>
+                            <p class="text-purple-900 font-medium">"${data.quote}"</p>
+                        </div>
+                        <div class="h-24 w-24 ${data.cssClass} rounded shadow-inner border border-stone-200 flex items-center justify-center text-xs text-stone-500 font-mono text-center p-2" title="Simulated Texture">
+                            Simulated<br>Finish
+                        </div>
+                    </div>
+                    <hr class="border-stone-100 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-bold text-stone-800 mb-2 uppercase text-xs tracking-wider">Strategic Application</h4>
+                            <ul class="space-y-3 text-sm text-stone-600">
+                                ${data.points.map(p => `<li class="flex items-start"><span class="text-purple-900 mr-2">▪</span> ${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-stone-800 mb-2 uppercase text-xs tracking-wider">The "Why"</h4>
+                            <p class="text-sm text-stone-600 leading-relaxed mb-4">
+                                ${data.why}
+                            </p>
+                            <div class="bg-stone-50 p-4 border-l-2 border-purple-900 italic text-stone-700 text-sm">
+                                "${data.insight}"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            display.innerHTML = html;
+        }
+
+        // Zone Logic & Chart
+        let radarChart;
+
+        function initZoneList() {
+            const list = document.getElementById('zone-list');
+            zones.forEach((zone, index) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 border-l-4 transition-all hover:bg-stone-50 zone-btn ${index === 0 ? 'border-purple-900 bg-stone-50' : 'border-stone-200'}`;
+                btn.onclick = () => updateZone(index);
+                btn.innerHTML = `
+                    <div class="font-bold text-stone-800 text-sm">${zone.name}</div>
+                    <div class="text-xs text-stone-500 truncate">${zone.materials}</div>
+                `;
+                btn.id = `zone-btn-${index}`;
+                list.appendChild(btn);
+            });
+        }
+
+        function updateZone(index) {
+            const zone = zones[index];
+            
+            // Update Text
+            document.getElementById('chart-title').innerText = zone.name;
+            document.getElementById('zone-desc-short').innerText = zone.desc;
+            document.getElementById('stat-material').innerText = zone.materials.split(',')[0]; // First material
+            document.getElementById('stat-function').innerText = zone.function;
+            document.getElementById('stat-psych').innerText = zone.psych;
+
+            // Update Active State
+            document.querySelectorAll('.zone-btn').forEach(b => {
+                b.classList.remove('border-purple-900', 'bg-stone-50');
+                b.classList.add('border-stone-200');
+            });
+            document.getElementById(`zone-btn-${index}`).classList.remove('border-stone-200');
+            document.getElementById(`zone-btn-${index}`).classList.add('border-purple-900', 'bg-stone-50');
+
+            // Update Chart
+            updateChart(zone.data);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('zoneRadarChart').getContext('2d');
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Privacy', 'Tech Integration', 'Warmth', 'Acoustics', 'Biophilia'],
+                    datasets: [{
+                        label: 'Sensory Profile',
+                        data: zones[0].data,
+                        backgroundColor: 'rgba(88, 28, 135, 0.2)', // Purple-900 low opacity
+                        borderColor: 'rgba(88, 28, 135, 1)',
+                        pointBackgroundColor: 'rgba(88, 28, 135, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(88, 28, 135, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e5e7eb' },
+                            grid: { color: '#e5e7eb' },
+                            pointLabels: {
+                                font: {
+                                    size: 11,
+                                    family: "'Inter', sans-serif",
+                                    weight: 'bold'
+                                },
+                                color: '#4b5563'
+                            },
+                            ticks: { display: false, max: 10, min: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.formattedValue + '/10 Intensity';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(newData) {
+            radarChart.data.datasets[0].data = newData;
+            radarChart.update();
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initZoneList();
+            initChart();
+            updateZone(0); // Load first zone
+        });
+
+    </script>
+</body>
+</html>
